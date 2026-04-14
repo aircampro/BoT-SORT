@@ -10,7 +10,6 @@ from tracker.kalman_filter import KalmanFilter
 
 from fast_reid.fast_reid_interfece import FastReIDInterface
 
-
 class STrack(BaseTrack):
     shared_kalman = KalmanFilter()
 
@@ -307,20 +306,23 @@ class BoTSORT(object):
             ious_dists = matching.fuse_score(ious_dists, detections)
 
         if self.args.with_reid:
-            emb_dists = matching.embedding_distance(strack_pool, detections) / 2.0
-            raw_emb_dists = emb_dists.copy()
-            emb_dists[emb_dists > self.appearance_thresh] = 1.0
-            emb_dists[ious_dists_mask] = 1.0
-            dists = np.minimum(ious_dists, emb_dists)
-
-            # Popular ReID method (JDE / FairMOT)
-            # raw_emb_dists = matching.embedding_distance(strack_pool, detections)
-            # dists = matching.fuse_motion(self.kalman_filter, raw_emb_dists, strack_pool, detections)
-            # emb_dists = dists
-
-            # IoU making ReID
-            # dists = matching.embedding_distance(strack_pool, detections)
-            # dists[ious_dists_mask] = 1.0
+            if self.args.with_reid_opt == 0:
+                emb_dists = matching.embedding_distance(strack_pool, detections) / 2.0
+                raw_emb_dists = emb_dists.copy()
+                emb_dists[emb_dists > self.appearance_thresh] = 1.0
+                emb_dists[ious_dists_mask] = 1.0
+                dists = np.minimum(ious_dists, emb_dists)
+            elif self.args.with_reid_opt == 1:
+                # Popular ReID method (JDE / FairMOT)
+                raw_emb_dists = matching.embedding_distance(strack_pool, detections)
+                dists = matching.fuse_motion(self.kalman_filter, raw_emb_dists, strack_pool, detections)
+                emb_dists = dists
+            elif self.args.with_reid_opt == 2:
+                # IoU making ReID
+                raw_emb_dists = 0
+                emb_dists = 0
+                dists = matching.embedding_distance(strack_pool, detections)
+                dists[ious_dists_mask] = 1.0
         else:
             dists = ious_dists
 
@@ -429,9 +431,7 @@ class BoTSORT(object):
         # output_stracks = [track for track in self.tracked_stracks if track.is_activated]
         output_stracks = [track for track in self.tracked_stracks]
 
-
         return output_stracks
-
 
 def joint_stracks(tlista, tlistb):
     exists = {}
@@ -446,7 +446,6 @@ def joint_stracks(tlista, tlistb):
             res.append(t)
     return res
 
-
 def sub_stracks(tlista, tlistb):
     stracks = {}
     for t in tlista:
@@ -456,7 +455,6 @@ def sub_stracks(tlista, tlistb):
         if stracks.get(tid, 0):
             del stracks[tid]
     return list(stracks.values())
-
 
 def remove_duplicate_stracks(stracksa, stracksb):
     pdist = matching.iou_distance(stracksa, stracksb)
