@@ -59,6 +59,7 @@ def make_parser():
 
     # ReID
     parser.add_argument("--with-reid", dest="with_reid", default=False, action="store_true", help="use Re-ID flag.")
+    parser.add_argument("--with-reid-opt", dest="with_reid_opt", type=int, choices=[0, 1, 2], default=0, help="select reid option 0-2")
     parser.add_argument("--fast-reid-config", dest="fast_reid_config", default=r"fast_reid/configs/MOT17/sbs_S50.yml", type=str, help="reid config file path")
     parser.add_argument("--fast-reid-weights", dest="fast_reid_weights", default=r"pretrained/mot17_sbs_S50.pth", type=str, help="reid config file path")
     parser.add_argument('--proximity_thresh', type=float, default=0.5, help='threshold for rejecting low overlap reid matches')
@@ -367,4 +368,3 @@ if __name__ == "__main__":
     print("TOTAL TIME END-to-END (with loading networks and images): ", mainTimer.total_time)
     print("TOTAL TIME (Detector + Tracker): " + str(timer.total_time) + ", FPS: " + str(1.0 /timer.average_time))
     print("TOTAL TIME (Tracker only): " + str(trackerTimer.total_time) + ", FPS: " + str(1.0 / trackerTimer.average_time))
-
